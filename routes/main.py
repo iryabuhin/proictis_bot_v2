@@ -2,6 +2,7 @@ from vkbottle.bot import Blueprint, Message
 from vkbottle.branch import ClsBranch, rule_disposal, Branch, ExitBranch
 from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
 from vkbottle.rule import LevenshteinDisRule, PayloadRule, VBMLRule, EventRule, Pattern, CommandRule, Any
+from models.user_state import PostgresStoredBranch
 import ujson
 
 MAIN_LOOP_KEYBOARD = [
@@ -23,26 +24,27 @@ MAIN_LOOP_KEYBOARD = [
 ]
 
 bp = Blueprint(name='main')
+bp.branch = PostgresStoredBranch()
 
-def make_main_keyboard():
-    k = Keyboard(one_time=False)
-    k.add_row()
-    k.add(
-        Text(
-            label='Наставники',
-            payload=ujson.dumps({'selection': 'mentors'})
-        ),
-        color='primary',
-    )
-    k.add_row()
-    k.add(
-        Text(
-            label='Проекты',
-            payload=ujson.dumps({'selection': 'projects'})
-        ),
-        color='primary'
-    )
-    return k.generate()
+# def make_main_keyboard():
+#     k = Keyboard(one_time=True)
+#     k.add_row()
+#     k.add(
+#         Text(
+#             label='Наставники',
+#             payload=ujson.dumps({'selection': 'mentors'})
+#         ),
+#         color='primary',
+#     )
+#     k.add_row()
+#     k.add(
+#         Text(
+#             label='Проекты',
+#             payload=ujson.dumps({'selection': 'projects'})
+#         ),
+#         color='primary'
+#     )
+#     return k.generate()
 
 
 @bp.on.message(PayloadRule({'command': 'start'}))
@@ -54,7 +56,7 @@ async def wrapper(ans: Message):
               'связанных с проектной деятельностью, а также уведомлять вас о новостях'
               'из жизни Проектного офиса. \n'
               'Если у вас возникнут какие-либо вопросы, нажмите кнопку "Помощь"',
-              keyboard=make_main_keyboard()
+              keyboard=keyboard_gen(MAIN_LOOP_KEYBOARD)
               )
     await bp.branch.add(uid=ans.from_id, branch='main')
 
@@ -85,7 +87,6 @@ async def reset_branch(ans: Message):
     )
 
 
-@bp.branch.cls_branch('main')
 class MainBranch(ClsBranch):
 
     async def branch(self, ans: Message, *args):
@@ -131,7 +132,6 @@ async def wrapper(ans: Message):
     )
 
 
-@bp.branch.cls_branch('projects')
 class ProjectInfoStubBranch(ClsBranch):
     async def branch(self, ans: Message, *args):
         await ans('[DEBUG] Branch ProjectInfoStubBranch, reply "exit" to exit (duh)')
@@ -154,3 +154,6 @@ bp.branch.add_branch(
 
 )
 
+
+bp.branch.add_branch(MainBranch, 'main')
+bp.branch.add_branch(ProjectInfoStubBranch, 'projects')

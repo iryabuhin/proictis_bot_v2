@@ -29,7 +29,6 @@ class MentorMessageCard:
 
     async def __init__(self, mentor_surname: str, use_cached: bool = True):
         # async constructor wont work without "asyncinit" pip package
-        # (or without using some other black magic fuckery)
         self.mentor_surname = mentor_surname
         self.use_cached = use_cached
 

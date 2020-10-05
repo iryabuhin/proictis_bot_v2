@@ -18,7 +18,7 @@ class UserState(Model):
     id = fields.IntField(pk=True)
     uid = fields.IntField()
     branch = fields.CharField(32)
-    context = fields.CharField(255)
+    context = fields.JSONField()
 
     class Meta:
         database = "user_state"

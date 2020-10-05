@@ -1,8 +1,7 @@
 import os
-import asyncio
 import aiohttp
-import sys
-
+import ujson
+from typing import Dict
 
 def surname_fuzz_processor(surname: str) -> str:
     return surname.strip().lower().replace('ё', 'е')
@@ -20,3 +19,13 @@ async def fetch_url(url: str, **kwargs) -> str:
         text = await response.text()
 
         return text
+
+
+async def get_json(url: str, **kwargs) -> Dict:
+    async with aiohttp.ClientSession() as client:
+        resp = await client.request(method='GET', url=url, **kwargs)
+        resp.raise_for_status()
+
+        _json = await resp.json()
+
+        return _json

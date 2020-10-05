@@ -5,6 +5,7 @@ from vkbottle.rule import VBMLRule, LevenshteinDisRule, PayloadRule
 from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
 from bot import photo_uploader
 from proictis_api.mentors import MentorMessageCard, MentorNotFoundException
+from models.user_state import PostgresStoredBranch
 
 try:
     import ujson as json
@@ -24,39 +25,40 @@ KEYBOARD = [
 
 
 bp = Blueprint(name='mentors')
+bp.branch = PostgresStoredBranch()
+
+@bp.on.message(
+    VBMLRule('наставники', lower=True)
+)
+async def wrapper(ans: Message):
+    await bp.branch.add(ans.from_id, 'mentors')
+    await ans('Вы можете узнать о наставнике отправив мне его/её фамилию.\n'
+          'Если я смогу найти наставника с такой фамилией, я покажу вам информацию о нем'
+          'и его контактные данные.',
+        keyboard=keyboard_gen(KEYBOARD, one_time=True))
 
 
 class MentorInfoBranch(ClsBranch):
     @rule_disposal(
-        LevenshteinDisRule('наставники', lev_d=75)
+        VBMLRule('выйти', lower=True)
     )
-    async def greeting(self, ans: Message, *args):
-        await ans('Вы можете узнать о наставнике отправив мне его/её фамилию.\n'
-                  'Если я смогу найти наставника с такой фамилией, я покажу вам информацию о нем'
-                  'и его контактные данные.')
-
-    @rule_disposal(PayloadRule({'command': 'exit'}))
     async def exit_branch(self, ans: Message):
         await ans(
             'Дополнительную информацию о наставниках вы всегда можете найти на сайте Проектного офиса.'
         )
         await bp.branch.exit(ans.peer_id)
-        # Return to main branch
-        await bp.branch.add(ans.peer_id, 'main')
 
-    @rule_disposal(VBMLRule('<surname>', lower=True))
-    async def wrapper(self, ans: Message, surname: str):
+    async def branch(self, ans: Message):
+        surname = ans.text.split()[0]
         try:
             # awaitable constructors WON'T WORK without
             # decorator provided by asyncinit pip pkg
-            # (or without some other black magic fuckery)
             card = (await MentorMessageCard(surname)).as_tuple()
 
         except MentorNotFoundException:
             await ans(
                 'Извините, я не могу найти наставника с такой фамилией.\n'
-                'Вы можете спросить меня еще раз, отправив фамилию наставника.'
-                ' '
+                'Вы можете спросить меня еще раз, отправив фамилию наставника.\n\n'
                 'Чтобы закончить, нажмите кнопку "Выйти".',
                 keyboard=keyboard_gen(KEYBOARD, one_time=True)
                 )
@@ -77,5 +79,7 @@ class MentorInfoBranch(ClsBranch):
             ]
         )
 
-        await ans(card_text, attachment=pic, keyboard=keyboard_gen(temp_kbrd))
+        await ans(card_text, attachment=pic, keyboard=keyboard_gen(temp_kbrd, one_time=True))
 
+
+bp.branch.add_branch(MentorInfoBranch, 'mentors')
