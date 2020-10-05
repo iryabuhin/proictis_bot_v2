@@ -27,7 +27,7 @@ photo_uploader = PhotoUploader(bot.api, generate_attachment_strings=True)
 
 
 if __name__ == '__main__':
-    bot.set_blueprints(demo.bp, mentors.bp, main.bp, news.bp, faq.bp)
+    bot.set_blueprints(mentors.bp, main.bp, news.bp, faq.bp)
 
     bot.run_polling(
         on_startup=init_db
