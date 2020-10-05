@@ -1,8 +1,6 @@
-import typing
-
 from tortoise import Model, fields
 from vkbottle.branch import DatabaseBranch
-from vkbottle.framework.framework.branch.abc import Branch
+import typing
 
 
 class User(Model):
@@ -24,7 +22,7 @@ class UserState(Model):
         database = "user_state"
 
 
-class PostgresStoredBranch(DatabaseBranch):
+class DBStoredBranch(DatabaseBranch):
     async def get_user(self, uid: int) -> typing.Tuple[str, typing.Union[str, dict]]:
         u = await UserState.get(uid=uid)
         return u.branch, u.context
