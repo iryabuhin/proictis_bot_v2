@@ -2,7 +2,7 @@ from vkbottle.bot import Blueprint, Message
 from vkbottle.branch import ClsBranch, rule_disposal, Branch, ExitBranch
 from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
 from vkbottle.rule import LevenshteinDisRule, PayloadRule, VBMLRule, EventRule, Pattern, CommandRule, Any
-from models.user_state import PostgresStoredBranch
+from models.user_state import DBStoredBranch
 import ujson
 
 MAIN_LOOP_KEYBOARD = [
@@ -24,7 +24,7 @@ MAIN_LOOP_KEYBOARD = [
 ]
 
 bp = Blueprint(name='main')
-bp.branch = PostgresStoredBranch()
+bp.branch = DBStoredBranch()
 
 # def make_main_keyboard():
 #     k = Keyboard(one_time=True)

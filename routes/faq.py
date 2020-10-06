@@ -1,32 +1,29 @@
 from vkbottle import keyboard_gen
 from vkbottle.bot import Blueprint, Message
-from vkbottle.rule import PayloadRule, CommandRule, VBMLRule
-from routes.news import PayloadContainsFieldRule
+from vkbottle.rule import PayloadRule, VBMLRule
 from vkbottle.branch import ClsBranch, rule_disposal
 from proictis_api.faq.handler_tools import detect_intent_texts
 from google.api_core.exceptions import GoogleAPIError
-from models import PostgresStoredBranch
+from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON
+from rules import ExitButtonPressed
+from models import DBStoredBranch
 from config import Config
 
 bp = Blueprint(name='faq')
-bp.branch = PostgresStoredBranch()
+bp.branch = DBStoredBranch()
 
 
-@bp.on.message(VBMLRule('/faq'))
+@bp.on.message(PayloadRule({'selection': 'faq'}))
 async def faq_wrapper(ans: Message):
     await ans('Задавайте свои вопросы как будто спрашиваете человека'
               'и я попытаюсь найти на них ответ!',
-              keyboard=keyboard_gen([[{
-                  'text': 'Выйти',
-                  'color': 'negative',
-                  'payload': '{"command": "exit"}'
-              }]]))
+              keyboard=keyboard_gen([[EXIT_BUTTON]])
+              )
     await bp.branch.add(ans.from_id, 'faq')
 
 
-
 class FaqDialogflowBranch(ClsBranch):
-    async def branch(self, ans: Message):
+    async def branch(self, ans: Message, *args):
         try:
             query_result = detect_intent_texts(
                 Config.PROJECT_ID,
@@ -43,9 +40,12 @@ class FaqDialogflowBranch(ClsBranch):
             msg = query_result.get('fulfillmentText')
             await ans(msg)
 
-    @rule_disposal(PayloadRule({'command': 'exit'}))
+    @rule_disposal(ExitButtonPressed())
     async def exit_branch(self, ans: Message):
-        await ans(f'[DEBUG] Exiting branch {self.__class__.__name__}', keyboard=[[]])
+        await ans(
+            message=f'[DEBUG] Exiting branch {self.__class__.__name__}',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
+        )
         await bp.branch.exit(ans.from_id)
 
 
