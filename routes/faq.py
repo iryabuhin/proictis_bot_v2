@@ -44,7 +44,7 @@ class FaqDialogflowBranch(ClsBranch):
     async def exit_branch(self, ans: Message):
         await ans(
             message=f'[DEBUG] Exiting branch {self.__class__.__name__}',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
         )
         await bp.branch.exit(ans.from_id)
 

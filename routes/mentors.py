@@ -46,7 +46,7 @@ class MentorInfoBranch(ClsBranch):
     async def exit_branch(self, ans: Message):
         await ans(
             'Дополнительную информацию о наставниках вы всегда можете найти на сайте Проектного офиса.',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
         )
         await bp.branch.exit(ans.peer_id)
 
