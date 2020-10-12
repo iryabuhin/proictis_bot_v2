@@ -18,6 +18,7 @@ CACHE_CONFIG = {
         'cache': 'aiocache.RedisCache',
         'endpoint': Config.REDIS_ENDPOINT,
         'port': Config.REDIS_PORT,
+        'password': Config.REDIS_PASSWORD,
         'timeout': 1,
         'serializer': {
             'class': 'aiocache.serializers.PickleSerializer'
