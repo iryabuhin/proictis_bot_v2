@@ -40,10 +40,18 @@ class FaqDialogflowBranch(ClsBranch):
             msg = query_result.get('fulfillmentText')
             await ans(msg)
 
+    @rule_disposal(VBMLRule('выйти', lower=True))
+    async def exit_branch(self, ans: Message):
+        await ans(
+            message='Главное меню:',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
+        )
+        await bp.branch.exit(ans.from_id)
+
     @rule_disposal(ExitButtonPressed())
     async def exit_branch(self, ans: Message):
         await ans(
-            message=f'[DEBUG] Exiting branch {self.__class__.__name__}',
+            message='Главное меню:',
             keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
         )
         await bp.branch.exit(ans.from_id)

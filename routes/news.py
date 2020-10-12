@@ -28,9 +28,10 @@ async def news_handler(ans: Message):
 class NewsBranch(ClsBranch):
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
-        await ans('[DEBUG] Exiting branch {}'.format(self.__class__.__name__),
-                  keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
-                  )
+        await ans(
+            message='Главное меню:',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
+            )
         await bp.branch.exit(ans.from_id)
 
     @rule_disposal(LevenshteinDisRule('предыдущая страница', lev_d=85))
