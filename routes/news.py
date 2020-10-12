@@ -6,7 +6,7 @@ from proictis_api.news import NewsList
 from vkbottle.keyboard import keyboard_gen
 from vkbottle import PhotoUploader
 from models.user_state import DBStoredBranch, UserState
-from keyboards import MAIN_MENU_KEYBOARD
+from keyboards import MAIN_MENU_KEYBOARD, EMPTY_KEYBOARD
 from rules import PayloadHasKey
 import json
 
@@ -30,7 +30,7 @@ class NewsBranch(ClsBranch):
     async def exit_branch(self, ans: Message):
         await ans(
             message='Главное меню:',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
             )
         await bp.branch.exit(ans.from_id)
 
@@ -41,7 +41,7 @@ class NewsBranch(ClsBranch):
         if 'page_num' in u.context:
             u.context['page_num'] += 1
         else:
-            u.context['page_num'] = 2
+            u.context['page_num'] = 1
 
         await u.save()
 
@@ -51,7 +51,7 @@ class NewsBranch(ClsBranch):
         msg = news.get_text()
         kbrd = news.get_keyboard()
 
-        await ans('Загружаем новости....', keyboard=keyboard_gen([]))
+        await ans('Загружаем новости....', keyboard=keyboard_gen(EMPTY_KEYBOARD))
         await ans(message=msg, keyboard=keyboard_gen(kbrd))
 
 
@@ -69,13 +69,12 @@ class NewsBranch(ClsBranch):
 
         await ans(
             message=msg,
-            keyboard=keyboard_gen(kbrd, inline=True)
+            keyboard=keyboard_gen(kbrd, one_time=True)
         )
 
     @rule_disposal(PayloadHasKey('news_id'))
     async def get_detailed_news_view(self, ans: Message):
         payload = PayloadHasKey.dispatch(ans.payload)
-
 
         news_list = await NewsList()
         msg, image_url = news_list.get_news_desc_and_img_by_id(_id=payload['news_id'].strip('{}'))
@@ -89,5 +88,6 @@ class NewsBranch(ClsBranch):
 
     async def branch(self, ans: Message):
         pass
+
 
 bp.branch.add_branch(NewsBranch, 'news')

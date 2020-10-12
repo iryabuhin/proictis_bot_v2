@@ -44,7 +44,7 @@ class FaqDialogflowBranch(ClsBranch):
     async def exit_branch(self, ans: Message):
         await ans(
             message='Главное меню:',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
         )
         await bp.branch.exit(ans.from_id)
 
@@ -57,7 +57,7 @@ class FaqDialogflowBranch(ClsBranch):
         )
         await ans(
             message='Главное меню:',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
         )
         await bp.branch.exit(ans.from_id)
 
