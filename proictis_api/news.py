@@ -1,6 +1,6 @@
 import json
 
-from utils import get_json
+from utils import fetch_json
 from asyncinit import asyncinit
 from config import Config
 from typing import Tuple, List, Dict, Any, Union
@@ -11,7 +11,7 @@ class NewsList:
     async def __init__(self):
         self.news_json = list(
             reversed(
-                await get_json(
+                await fetch_json(
                     url=Config.BASE_API_URL + Config.URL_PATH['news']
                 )
             )
@@ -43,7 +43,7 @@ class NewsList:
         self.make_text(page_num=page_num)
         self.make_keyboard(page_num=page_num)
 
-    def make_keyboard(self, page_num=1):
+    def make_keyboard(self, page_num=0):
         self.reset_keyboard()
 
         if page_num*Config.NEWS_PER_MSG > len(self.news_json):
@@ -72,14 +72,15 @@ class NewsList:
         )
 
 
-    def make_text(self, page_num=1):
+    def make_text(self, page_num=0):
         self.reset_text()
         message = []
-        if page_num == 1:
+        if page_num == 0:
             message.append('Последние новости с сайта Проектного офиса:')
 
         if page_num*Config.NEWS_PER_MSG > len(self.news_json):
-            self.text = 'Новости закончились! Нажмите "Назад", чтобы вернуться к предыдущим новостям или "Выйти", чтобы выйти'
+            self.text = 'Новости закончились! Нажмите "Назад", чтобы вернуться ' \
+                        'к предыдущим новостям или "Выйти", чтобы выйти'
             return
 
         for i in range((page_num - 1) * Config.NEWS_PER_MSG, Config.NEWS_PER_MSG * page_num):

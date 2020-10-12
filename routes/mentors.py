@@ -5,7 +5,8 @@ from vkbottle.rule import VBMLRule, LevenshteinDisRule, PayloadRule
 from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
 from bot import photo_uploader
 from proictis_api.mentors import MentorMessageCard, MentorNotFoundException
-from models.user_state import PostgresStoredBranch
+from models.user_state import DBStoredBranch
+from keyboards import MAIN_MENU_KEYBOARD
 
 try:
     import ujson as json
@@ -25,7 +26,7 @@ KEYBOARD = [
 
 
 bp = Blueprint(name='mentors')
-bp.branch = PostgresStoredBranch()
+bp.branch = DBStoredBranch()
 
 @bp.on.message(
     VBMLRule('наставники', lower=True)
@@ -39,12 +40,11 @@ async def wrapper(ans: Message):
 
 
 class MentorInfoBranch(ClsBranch):
-    @rule_disposal(
-        VBMLRule('выйти', lower=True)
-    )
+    @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
         await ans(
-            'Дополнительную информацию о наставниках вы всегда можете найти на сайте Проектного офиса.'
+            'Дополнительную информацию о наставниках вы всегда можете найти на сайте Проектного офиса.',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
         )
         await bp.branch.exit(ans.peer_id)
 

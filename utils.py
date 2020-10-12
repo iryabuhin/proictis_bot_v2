@@ -1,7 +1,11 @@
+from typing import Dict, Union, List, AnyStr
+from vkbottle.framework.framework.rule import Message
+from vkbottle.rule import AbstractMessageRule, PayloadRule
 import os
-import aiohttp
 import ujson
-from typing import Dict
+import aiohttp
+
+
 
 def surname_fuzz_processor(surname: str) -> str:
     return surname.strip().lower().replace('ё', 'е')
@@ -21,11 +25,11 @@ async def fetch_url(url: str, **kwargs) -> str:
         return text
 
 
-async def get_json(url: str, **kwargs) -> Dict:
+async def fetch_json(url: str, **kwargs) -> Dict:
     async with aiohttp.ClientSession() as client:
-        resp = await client.request(method='GET', url=url, **kwargs)
+        resp = await client.get(url=url, **kwargs)
         resp.raise_for_status()
 
-        _json = await resp.json()
+        _json = await resp.json(loads=ujson.loads, content_type=None)
 
         return _json

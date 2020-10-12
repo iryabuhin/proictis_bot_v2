@@ -1,1 +1,1 @@
-from .user_state import UserState, User, PostgresStoredBranch
+from .user_state import UserState, User, DBStoredBranch

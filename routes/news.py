@@ -5,35 +5,14 @@ from vkbottle.branch import ClsBranch, rule_disposal
 from proictis_api.news import NewsList
 from vkbottle.keyboard import keyboard_gen
 from vkbottle import PhotoUploader
-from models.user_state import PostgresStoredBranch, UserState
+from models.user_state import DBStoredBranch, UserState
+from keyboards import MAIN_MENU_KEYBOARD
+from rules import PayloadHasKey
 import json
 
 bp = Blueprint(name='news')
-bp.branch = PostgresStoredBranch()
+bp.branch = DBStoredBranch()
 
-
-class PayloadContainsFieldRule(AbstractMessageRule):
-        def __init__(self, fields=Union[str, List[str]], mode=1):
-            self.mode = mode
-            if isinstance(fields, str):
-                self.fields = [fields]
-            else:
-                self.fields = fields
-        @staticmethod
-        def dispatch(payload: str) -> dict:
-            try:
-                return json.loads(payload)
-            except json.decoder.JSONDecodeError:
-                return dict()
-            
-        async def check(self, message: Message) -> bool:
-            if message.payload is not None:
-                payload = self.dispatch(message.payload)
-                if self.mode == 1:
-                    for field in self.fields:
-                        if payload.get(field) is None:
-                            return False
-                    return True
 
 
 @bp.on.message(VBMLRule('новости', lower=True))
@@ -49,7 +28,10 @@ async def news_handler(ans: Message):
 class NewsBranch(ClsBranch):
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
-        await ans('[DEBUG] Exiting branch {}'.format(self.__class__.__name__), keyboard=keyboard_gen([]))
+        await ans(
+            message='Главное меню:',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)
+            )
         await bp.branch.exit(ans.from_id)
 
     @rule_disposal(LevenshteinDisRule('предыдущая страница', lev_d=85))
@@ -69,8 +51,9 @@ class NewsBranch(ClsBranch):
         msg = news.get_text()
         kbrd = news.get_keyboard()
 
-        await ans('Загружаем новости...', keyboard=keyboard_gen([]))
+        await ans('Загружаем новости....', keyboard=keyboard_gen([]))
         await ans(message=msg, keyboard=keyboard_gen(kbrd))
+
 
     @rule_disposal(VBMLRule('далее', lower=True))
     async def send_news(self, ans: Message):
@@ -81,17 +64,18 @@ class NewsBranch(ClsBranch):
         kbrd = news_list.get_keyboard()
 
         u = await UserState.get(uid=ans.from_id)
-        u.context['page_num'] = 1
+        u.context['page_num'] = 0
         await u.save()
 
         await ans(
             message=msg,
-            keyboard=keyboard_gen(kbrd, one_time=True)
+            keyboard=keyboard_gen(kbrd, inline=True)
         )
 
-    @rule_disposal(PayloadContainsFieldRule('news_id'))
+    @rule_disposal(PayloadHasKey('news_id'))
     async def get_detailed_news_view(self, ans: Message):
-        payload = PayloadContainsFieldRule.dispatch(ans.payload)
+        payload = PayloadHasKey.dispatch(ans.payload)
+
 
         news_list = await NewsList()
         msg, image_url = news_list.get_news_desc_and_img_by_id(_id=payload['news_id'].strip('{}'))
