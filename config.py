@@ -38,6 +38,8 @@ class Config:
 
     REDIS_ENDPOINT = urlparse(REDIS_URL).hostname
     REDIS_PORT = urlparse(REDIS_URL).port
+    REDIS_USERNAME = urlparse(REDIS_URL).username
+    REDIS_PASSWORD = urlparse(REDIS_URL).password
     
     GOOGLE_APPLICATION_CREDENTIALS = envget('GOOGLE_APPLICATION_CREDENTIALS')
     PROJECT_ID = envget('PROJECT_ID')
