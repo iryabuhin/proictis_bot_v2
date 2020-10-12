@@ -4,7 +4,7 @@ from vkbottle.rule import PayloadRule, VBMLRule
 from vkbottle.branch import ClsBranch, rule_disposal
 from proictis_api.faq.handler_tools import detect_intent_texts
 from google.api_core.exceptions import GoogleAPIError
-from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON
+from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON, EMPTY_KEYBOARD
 from rules import ExitButtonPressed
 from models import DBStoredBranch
 from config import Config
@@ -38,7 +38,7 @@ class FaqDialogflowBranch(ClsBranch):
             raise ValueError(e)
         else:
             msg = query_result.get('fulfillmentText')
-            await ans(msg)
+            await ans(msg, keyboard=keyboard_gen([[EXIT_BUTTON]]))
 
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
@@ -50,6 +50,11 @@ class FaqDialogflowBranch(ClsBranch):
 
     @rule_disposal(ExitButtonPressed())
     async def exit_branch(self, ans: Message):
+        await ans(
+            message='За дополнительной информацией вы всегда можете обратиться к наставникам '
+                    'или на сайт Проектного офиса',
+            keyboard=keyboard_gen(EMPTY_KEYBOARD, one_time=False)
+        )
         await ans(
             message='Главное меню:',
             keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, inline=True)

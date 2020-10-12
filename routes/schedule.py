@@ -128,7 +128,7 @@ class ScheduleBranch(ClsBranch):
             u_weekday = (u_weekday - 1) % 6
 
         caches.set_config(CACHE_CONFIG)
-        cache = caches.get('default')
+        cache = caches.get('redis')
 
         schedule = await cache.get('schedule_{}'.format(str(ans.from_id)))
         if schedule is None:
@@ -180,7 +180,7 @@ class ScheduleBranch(ClsBranch):
             )
         else:
             caches.set_config(CACHE_CONFIG)
-            cache = caches.get('default')
+            cache = caches.get('redis')
 
             msg = schedule.get_text()
             await ans(message=msg, keyboard=keyboard_gen(SCHEDULE_KEYBOARD, one_time=False))

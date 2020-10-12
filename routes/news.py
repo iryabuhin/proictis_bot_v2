@@ -69,7 +69,7 @@ class NewsBranch(ClsBranch):
 
         await ans(
             message=msg,
-            keyboard=keyboard_gen(kbrd, one_time=True)
+            keyboard=keyboard_gen(kbrd, inline=True)
         )
 
     @rule_disposal(PayloadHasKey('news_id'))

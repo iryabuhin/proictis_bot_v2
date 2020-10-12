@@ -37,7 +37,7 @@ class ScheduleResponseBuilder:
     def build_text(self, weekday: int = 1) -> None:
         msg = list()
         msg.append('Расписание {}:'.format(self.name))
-        msg.append('Сегодня: {}\n'.format(self.weekdays[weekday-1]))
+        msg.append('{}\n'.format(self.weekdays[weekday-1]))
 
         for num, time, entry in zip(
             self.table[0][1:],
