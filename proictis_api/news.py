@@ -1,6 +1,6 @@
 import json
 
-from utils import get_json
+from utils import fetch_json
 from asyncinit import asyncinit
 from config import Config
 from typing import Tuple, List, Dict, Any, Union
@@ -11,7 +11,7 @@ class NewsList:
     async def __init__(self):
         self.news_json = list(
             reversed(
-                await get_json(
+                await fetch_json(
                     url=Config.BASE_API_URL + Config.URL_PATH['news']
                 )
             )

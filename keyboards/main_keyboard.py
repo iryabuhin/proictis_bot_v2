@@ -26,5 +26,12 @@ MAIN_MENU_KEYBOARD = [
             'color': 'positive',
             'payload': ujson.dumps({'selection': 'help'})
         }
+    ],
+    [
+        {
+            'text': 'Расписание',
+            'color': 'primary',
+            'payload': ujson.dumps({'selection': 'schedule'})
+        }
     ]
 ]

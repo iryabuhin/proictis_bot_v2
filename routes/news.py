@@ -7,7 +7,7 @@ from vkbottle.keyboard import keyboard_gen
 from vkbottle import PhotoUploader
 from models.user_state import DBStoredBranch, UserState
 from keyboards import MAIN_MENU_KEYBOARD
-from rules import PayloadContainsFieldRule
+from rules import PayloadHasKey
 import json
 
 bp = Blueprint(name='news')
@@ -71,9 +71,9 @@ class NewsBranch(ClsBranch):
             keyboard=keyboard_gen(kbrd, one_time=True)
         )
 
-    @rule_disposal(PayloadContainsFieldRule('news_id'))
+    @rule_disposal(PayloadHasKey('news_id'))
     async def get_detailed_news_view(self, ans: Message):
-        payload = PayloadContainsFieldRule.dispatch(ans.payload)
+        payload = PayloadHasKey.dispatch(ans.payload)
 
 
         news_list = await NewsList()

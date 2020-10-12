@@ -3,7 +3,8 @@ from vkbottle.rule import AbstractMessageRule, PayloadRule
 from typing import Union, List, Dict, AnyStr, Tuple
 import json
 
-class PayloadContainsFieldRule(AbstractMessageRule):
+
+class PayloadHasKey(AbstractMessageRule):
     def __init__(self, fields=Union[str, List[str]], mode=1):
         self.mode = mode
         if isinstance(fields, str):

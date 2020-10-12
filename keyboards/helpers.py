@@ -5,3 +5,5 @@ EXIT_BUTTON = {
     'color': 'negative',
     'payload': ujson.dumps({'command': 'exit'})
 }
+
+EMPTY_KEYBOARD = []

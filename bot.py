@@ -3,7 +3,8 @@ from vkbottle import PhotoUploader
 from dotenv import load_dotenv
 
 from config import Config
-from routes import main, mentors, demo, news, faq
+from routes import main, mentors, demo, news, faq, schedule
+from routes.schedule import ScheduleBranch
 from models import DBStoredBranch
 from utils import envget
 from tortoise import Tortoise
@@ -27,7 +28,7 @@ photo_uploader = PhotoUploader(bot.api, generate_attachment_strings=True)
 
 
 if __name__ == '__main__':
-    bot.set_blueprints(mentors.bp, main.bp, news.bp, faq.bp)
+    bot.set_blueprints(mentors.bp, main.bp, news.bp, faq.bp, schedule.bp)
 
     bot.run_polling(
         on_startup=init_db

@@ -40,9 +40,7 @@ async def wrapper(ans: Message):
 
 
 class MentorInfoBranch(ClsBranch):
-    @rule_disposal(
-        VBMLRule('выйти', lower=True)
-    )
+    @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
         await ans(
             'Дополнительную информацию о наставниках вы всегда можете найти на сайте Проектного офиса.',
