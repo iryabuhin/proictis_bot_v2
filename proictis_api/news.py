@@ -39,7 +39,7 @@ class NewsList:
 
         return text, image_link
 
-    def make_text_and_keyboard(self, page_num=1):
+    def make_text_and_keyboard(self, page_num=0):
         self.make_text(page_num=page_num)
         self.make_keyboard(page_num=page_num)
 

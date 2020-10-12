@@ -111,7 +111,7 @@ class ScheduleBranch(ClsBranch):
 
             await ans(
                 message=msg,
-                keyboard=keyboard_gen(SCHEDULE_KEYBOARD, one_time=False)
+                keyboard=keyboard_gen(SCHEDULE_KEYBOARD, one_time=True)
             )
         
     @rule_disposal(PayloadHasKey('day'))
@@ -196,12 +196,18 @@ class ScheduleBranch(ClsBranch):
 
     @rule_disposal(ExitButtonPressed())
     async def _exit(self, ans: Message):
-        await ans('Возвращаемся в главное меню', keyboard=keyboard_gen(MAIN_MENU_KEYBOARD))
+        await ans(
+            'Возвращаемся в главное меню',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
+        )
         await bp.branch.exit(ans.from_id)
 
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def _exit(self, ans: Message):
-        await ans('Возвращаемся в главное меню', keyboard=keyboard_gen(MAIN_MENU_KEYBOARD))
+        await ans(
+            'Возвращаемся в главное меню',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
+        )
         await bp.branch.exit(ans.from_id)
 
 
