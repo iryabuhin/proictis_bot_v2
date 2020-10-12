@@ -63,7 +63,7 @@ class MentorInfoBranch(ClsBranch):
         photo_data = await photo_uploader.get_data_from_link(link=avatar_link)
         pic = await photo_uploader.upload_message_photo(photo_data)
 
-        temp_kbrd = [EXIT_BUTTON]
+        temp_kbrd = [[EXIT_BUTTON]]
         temp_kbrd.append([
                 {
                     'type': 'open_link',
