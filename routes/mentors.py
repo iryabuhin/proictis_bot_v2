@@ -18,7 +18,7 @@ bp = Blueprint(name='mentors')
 bp.branch = DBStoredBranch()
 
 
-@bp.on.message(VBMLRule('наставники', lower=True))
+@bp.on.message(PayloadRule({'selection': 'mentors'}))
 async def wrapper(ans: Message):
     await bp.branch.add(ans.from_id, 'mentors')
     await ans(
