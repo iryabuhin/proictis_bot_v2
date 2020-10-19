@@ -1,50 +1,20 @@
 from vkbottle.bot import Blueprint, Message
 from vkbottle.branch import ClsBranch, rule_disposal, Branch, ExitBranch
 from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
-from vkbottle.rule import LevenshteinDisRule, PayloadRule, VBMLRule, EventRule, Pattern, CommandRule, Any
-from models.user_state import DBStoredBranch
+from vkbottle.rule import PayloadRule, VBMLRule, EventRule, Pattern, CommandRule, Any
+from vkbottle.ext import Middleware
+from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON
+from models.user_state import DBStoredBranch, UserState
+from routes.faq import FaqDialogflowBranch
+from routes.mentors import MentorInfoBranch
+from routes.news import NewsBranch
+from routes.schedule import ScheduleBranch
 import ujson
-
-MAIN_LOOP_KEYBOARD = [
-    [
-        {
-            "type": "text",
-            "label": "Наставники",
-            "payload": "{\"selection\": \"mentors\"}",
-            "color": "primary"
-        }
-    ],
-    [
-        {
-            "type": "text",
-            "label": "Проекты",
-            "payload": "{\"selection\": \"projects\"}"
-        }
-    ]
-]
 
 bp = Blueprint(name='main')
 bp.branch = DBStoredBranch()
 
-# def make_main_keyboard():
-#     k = Keyboard(one_time=True)
-#     k.add_row()
-#     k.add(
-#         Text(
-#             label='Наставники',
-#             payload=ujson.dumps({'selection': 'mentors'})
-#         ),
-#         color='primary',
-#     )
-#     k.add_row()
-#     k.add(
-#         Text(
-#             label='Проекты',
-#             payload=ujson.dumps({'selection': 'projects'})
-#         ),
-#         color='primary'
-#     )
-#     return k.generate()
+
 
 
 @bp.on.message(PayloadRule({'command': 'start'}))
@@ -56,7 +26,7 @@ async def wrapper(ans: Message):
               'связанных с проектной деятельностью, а также уведомлять вас о новостях'
               'из жизни Проектного офиса. \n'
               'Если у вас возникнут какие-либо вопросы, нажмите кнопку "Помощь"',
-              keyboard=keyboard_gen(MAIN_LOOP_KEYBOARD)
+              keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
               )
     await bp.branch.add(uid=ans.from_id, branch='main')
 
@@ -91,37 +61,57 @@ class MainBranch(ClsBranch):
 
     async def branch(self, ans: Message, *args):
         await ans(
-            message='Ты сейчас в основном бранче',
-            payload=ujson.dumps({'selection': 'mentors'})
+            message='Главное меню',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=False)
         )
 
-    @rule_disposal(
-        PayloadRule({"selection": "mentors"}),
-        VBMLRule('наставники', lower=True)
-    )
-    async def mentors(self, ans: Message):
-        await bp.branch.add(ans.peer_id, 'mentors')
+    @rule_disposal(PayloadRule({'selection': 'faq'}))
+    async def faq_wrapper(self, ans: Message):
+        await ans('Задавайте свои вопросы как будто спрашиваете человека'
+                  'и я попытаюсь найти на них ответ!',
+                  keyboard=keyboard_gen([[EXIT_BUTTON]])
+                  )
+        await bp.branch.add(ans.from_id, 'faq')
 
-    @rule_disposal(
-        VBMLRule('test', lower=True)
-    )
-    async def wrapper(self, ans: Message, **kwargs):
+    @rule_disposal(VBMLRule('test', lower=True))
+    async def test(self, ans: Message):
         await ans(
-            'Выберите одну из опций:',
-            keyboard=make_main_keyboard()
+            message='Выберите одну из опций:',
+            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
         )
 
+    @rule_disposal(PayloadRule({'selection': 'schedule'}))
+    async def schedule_enter(self, ans: Message):
+        await ans('Введите ваш запрос - это может быть номер группы, аудитории или фамилия преподователя')
+        await bp.branch.add(ans.from_id, 'schedule')
 
-    @rule_disposal(
-        PayloadRule(
-            {
-                "selection": "projects"
-            }
-        ),
-        VBMLRule('проекты', lower=True)
-    )
+    @rule_disposal(PayloadRule({'selection': 'mentors'}))
+    async def mentors_enter(self, ans: Message):
+        await bp.branch.add(ans.from_id, 'mentors')
+        await ans(
+            'Вы можете узнать о наставнике отправив мне его/её фамилию.\n'
+            'Если я смогу найти наставника с такой фамилией, я покажу вам информацию о нем'
+            'и его контактные данные.',
+            keyboard=keyboard_gen([[EXIT_BUTTON]], one_time=True)
+        )
+
+    @rule_disposal(VBMLRule('новости', lower=True))
+    async def news_enter(self, ans: Message):
+        await bp.branch.add(ans.from_id, 'news')
+        await ans(
+            'Нажмите "Далее", чтобы увидеть последние новости с сайта Проектного офиса или'
+            'нажмите "Поиск" для интерактивного поиска по новостям Проектного офиса и группы ИКТИБ ВКонтакте',
+            keyboard=keyboard_gen([[{'text': 'Далее', 'color': 'positive'}], [{'text': 'Поиск'}]])
+        )
+
+    @rule_disposal(PayloadRule({'selection': 'projects'}))
     async def projects(self, ans: Message):
         await bp.branch.add(ans.peer_id, 'projects')
+
+
+    @rule_disposal(PayloadRule({'selection': 'help'}))
+    async def projects(self, ans: Message):
+        await bp.branch.add(ans.peer_id, 'help')
 
 
 @bp.on.message(CommandRule('test_bp_branches'))
@@ -132,28 +122,8 @@ async def wrapper(ans: Message):
     )
 
 
-class ProjectInfoStubBranch(ClsBranch):
-    async def branch(self, ans: Message, *args):
-        await ans('[DEBUG] Branch ProjectInfoStubBranch, reply "exit" to exit (duh)')
-
-    @rule_disposal(
-        VBMLRule('exit', lower=True)
-    )
-    async def exit_branch(self, ans: Message):
-        await ans('[DEBUG] Exiting branch...')
-        await bp.branch.exit(ans.peer_id)
-
-
-bp.branch.add_branch(
-    MainBranch,
-    'main'
-)
-bp.branch.add_branch(
-    ProjectInfoStubBranch,
-    'projects'
-
-)
-
-
 bp.branch.add_branch(MainBranch, 'main')
-bp.branch.add_branch(ProjectInfoStubBranch, 'projects')
+bp.branch.add_branch(NewsBranch, 'news')
+bp.branch.add_branch(MentorInfoBranch, 'mentors')
+bp.branch.add_branch(FaqDialogflowBranch, 'faq')
+bp.branch.add_branch(ScheduleBranch, 'schedule')

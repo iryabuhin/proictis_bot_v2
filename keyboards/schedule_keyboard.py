@@ -18,7 +18,7 @@ SCHEDULE_KEYBOARD = [
         {
             'text': 'Дни недели',
             'color': 'primary',
-            'payload': ujson.dumps({'week': 'show_weekdays'})
+            'payload': ujson.dumps({'weekdays': 'show'})
         }
     ],
     [

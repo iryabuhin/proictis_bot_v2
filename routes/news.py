@@ -1,4 +1,6 @@
 from typing import List, Union, Dict, Tuple, AnyStr, Callable
+
+import ujson
 from vkbottle.bot import Blueprint, Message
 from vkbottle.rule import VBMLRule, AbstractMessageRule, LevenshteinDisRule
 from vkbottle.branch import ClsBranch, rule_disposal
@@ -9,6 +11,8 @@ from models.user_state import DBStoredBranch, UserState
 from keyboards import MAIN_MENU_KEYBOARD, EMPTY_KEYBOARD
 from rules import PayloadHasKey
 import json
+
+from utils import return_to_main_menu
 
 bp = Blueprint(name='news')
 bp.branch = DBStoredBranch()
@@ -28,15 +32,14 @@ async def news_handler(ans: Message):
 class NewsBranch(ClsBranch):
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
-        await ans(
-            message='Главное меню:',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
-            )
-        await bp.branch.exit(ans.from_id)
+        await return_to_main_menu(ans)
 
     @rule_disposal(LevenshteinDisRule('предыдущая страница', lev_d=85))
     async def inc_page(self, ans: Message):
         u = await UserState.get(uid=ans.from_id)
+
+        if isinstance(u.context, str):
+            u.context = ujson.loads(u.context)
 
         if 'page_num' in u.context:
             u.context['page_num'] += 1

@@ -9,6 +9,10 @@ __pycache__/
 # Google Cloud credentials file folder
 google_creds/
 
+# some private data
+mentor_info.json
+projects.json
+
 # IDE stuff
 .idea/
 .vscode/

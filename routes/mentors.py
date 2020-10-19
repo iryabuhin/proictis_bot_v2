@@ -1,12 +1,15 @@
+import aiohttp
 from vkbottle.bot import Message
 from vkbottle.bot import Blueprint
 from vkbottle.branch import ClsBranch, rule_disposal
-from vkbottle.rule import VBMLRule, LevenshteinDisRule, PayloadRule
-from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
+from vkbottle.rule import VBMLRule, PayloadRule
+from vkbottle.keyboard import keyboard_gen
 from bot import photo_uploader
+from config import Config
 from proictis_api.mentors import MentorMessageCard, MentorNotFoundException
-from models.user_state import DBStoredBranch
+from models import DBStoredBranch, UserState
 from keyboards import MAIN_MENU_KEYBOARD, EMPTY_KEYBOARD, EXIT_BUTTON
+from utils import fetch_json, return_to_main_menu
 
 try:
     import ujson as json
@@ -33,37 +36,45 @@ class MentorInfoBranch(ClsBranch):
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
         await ans(
-            'Дополнительную информацию о наставниках вы всегда можете найти на сайте Проектного офиса.',
+            'Дополнительную информацию о наставниках вы всегда можете найти на сайте Проектного офиса.\n'
+            '(https://proictis.sfedu.ru)',
             keyboard=keyboard_gen(EMPTY_KEYBOARD)
         )
-        await ans(
-            'Главное меню',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
-        )
-        await bp.branch.exit(ans.peer_id)
+        await return_to_main_menu(ans)
 
     async def branch(self, ans: Message):
         surname = ans.text.split()[0]
         try:
-            # awaitable constructors WON'T WORK without
-            # decorator provided by asyncinit pip pkg
-            card = (await MentorMessageCard(surname)).as_tuple()
+
+            data = await fetch_json(Config.BASE_API_URL + Config.URL_PATH['mentors'])
+            card = MentorMessageCard(data, surname)
+
+        except aiohttp.ClientResponseError as e:
+            print('[ERROR] HTTP Client Response Error occured: {}, {}'.format(
+                e.status,
+                e.message
+            ))
+            await ans(
+                'Произошла ошибка при обработке запроса к API Проектного офиса, возможно, он временно недоступен.\n'
+                'Если эта ошибка возникает продолжительно в течение более чем нескольких часов, обратитесь к администрации сайта.',
+                keyboard=keyboard_gen(EMPTY_KEYBOARD)
+            )
 
         except MentorNotFoundException:
             await ans(
                 'Извините, я не могу найти наставника с такой фамилией.\n'
                 'Вы можете спросить меня еще раз, отправив фамилию наставника.\n\n'
                 'Чтобы закончить, нажмите кнопку "Выйти".',
-                keyboard=keyboard_gen([[EXIT_BUTTON]], one_time=True)
+                keyboard=keyboard_gen([[EXIT_BUTTON]], one_time=False)
                 )
             return
 
-        card_text, avatar_link, doc_link = card
+        card_text, avatar_link, doc_link = card.as_tuple()
 
         photo_data = await photo_uploader.get_data_from_link(link=avatar_link)
         pic = await photo_uploader.upload_message_photo(photo_data)
 
-        temp_kbrd = [EXIT_BUTTON]
+        temp_kbrd = [[EXIT_BUTTON]]
         temp_kbrd.append([
                 {
                     'type': 'open_link',
@@ -73,7 +84,9 @@ class MentorInfoBranch(ClsBranch):
             ]
         )
 
-        await ans(card_text, attachment=pic, keyboard=keyboard_gen(temp_kbrd, one_time=True))
+        await ans(message=card_text, attachment=pic)
+        await ans('Введите фамилию наставника, о котором хотели бы узнать или нажмите "Выйти", чтобы вернуться в главное меню',
+                  keyboard=keyboard_gen(temp_kbrd, one_time=True))
 
 
 bp.branch.add_branch(MentorInfoBranch, 'mentors')
