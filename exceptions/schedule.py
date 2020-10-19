@@ -15,4 +15,7 @@ class ScheduleNoEntriesFoundException(BaseScheduleException):
 class ScheduleUnknownErrorException(BaseScheduleException):
     pass
 
+class ScheduleMultipleChoicesException(BaseScheduleException):
+    pass
+
 

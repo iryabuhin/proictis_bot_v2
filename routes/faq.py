@@ -8,6 +8,7 @@ from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON, EMPTY_KEYBOARD
 from rules import ExitButtonPressed
 from models import DBStoredBranch
 from config import Config
+from utils import return_to_main_menu
 
 bp = Blueprint(name='faq')
 bp.branch = DBStoredBranch()
@@ -38,15 +39,11 @@ class FaqDialogflowBranch(ClsBranch):
             raise ValueError(e)
         else:
             msg = query_result.get('fulfillmentText')
-            await ans(msg, keyboard=keyboard_gen([[EXIT_BUTTON]]))
+            await ans(msg, keyboard=keyboard_gen([[EXIT_BUTTON]], one_time=False))
 
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def exit_branch(self, ans: Message):
-        await ans(
-            message='Главное меню:',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
-        )
-        await bp.branch.exit(ans.from_id)
+        await return_to_main_menu(ans)
 
     @rule_disposal(ExitButtonPressed())
     async def exit_branch(self, ans: Message):
@@ -55,11 +52,7 @@ class FaqDialogflowBranch(ClsBranch):
                     'или на сайт Проектного офиса',
             keyboard=keyboard_gen(EMPTY_KEYBOARD, one_time=False)
         )
-        await ans(
-            message='Главное меню:',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
-        )
-        await bp.branch.exit(ans.from_id)
+        await return_to_main_menu(ans)
 
 
 bp.branch.add_branch(FaqDialogflowBranch, 'faq')

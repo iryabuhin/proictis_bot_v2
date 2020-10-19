@@ -85,10 +85,9 @@ class NewsList:
 
         for i in range((page_num - 1) * Config.NEWS_PER_MSG, Config.NEWS_PER_MSG * page_num):
                 message.append(
-                '{}\n\n{}\n{}\n'.format(
+                '{}\n\n{}\n\n'.format(
                     f'{str(i+1)}) ' + self.news_json[i]['title'],
                     self.news_json[i]['shortDescription'],
-                    '=' * 50
                 )
             )
         self.text = ''.join(message)

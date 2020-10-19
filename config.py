@@ -7,6 +7,8 @@ load_dotenv()
 
 
 class Config:
+    DEBUG = envget('DEBUG') or True
+
     BASEDIR = os.path.abspath(__file__)
     TOKEN = envget('TOKEN') or  None
     DATABASE_URL = envget('DATABASE_URL') or "sqlite://users.db"

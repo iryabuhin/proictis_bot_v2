@@ -1,15 +1,17 @@
 from typing import Union, Optional, Dict
-
 from vkbottle import keyboard_gen
 from vkbottle.bot import Blueprint, Message
 from vkbottle.branch import ClsBranch, rule_disposal
 from vkbottle.rule import PayloadRule, CommandRule, VBMLRule
 from aiocache import caches
 from keyboards import MAIN_MENU_KEYBOARD, SCHEDULE_KEYBOARD, EMPTY_KEYBOARD
+from typing import List, Tuple, Dict, AnyStr, Union
 from proictis_api.schedule import ScheduleResponseBuilder
-from exceptions import ScheduleNoEntriesFoundException, ScheduleUnknownErrorException, ScheduleResponseFormatException
+from exceptions import ScheduleNoEntriesFoundException, ScheduleUnknownErrorException,\
+    ScheduleResponseFormatException,\
+    ScheduleMultipleChoicesException
 from rules import PayloadHasKey, ExitButtonPressed
-from utils import fetch_json
+from utils import fetch_json, return_to_main_menu
 from models import DBStoredBranch, UserState
 from config import Config
 from cache_config import CACHE_CONFIG
@@ -19,6 +21,34 @@ import aiohttp
 
 bp = Blueprint(name='schedule')
 bp.branch = DBStoredBranch()
+
+
+def parse_choices(data: Dict) -> Tuple[str, List[List[Dict]]]:
+    msg = list()
+    keyboard = list()
+
+    options = [item['name'] for item in data['choices']]
+
+    msg.append('Возможно, вы имели в виду:\n')
+
+    for i, option in enumerate(options):
+        msg.append('{}) {}'.format(
+            str(i + 1),
+            option
+        ))
+
+        keyboard.append(
+            [
+                {
+                    'text': option,
+                    'color': 'primary'
+                }
+            ]
+        )
+
+    msg = '\n'.join(msg)
+
+    return msg, keyboard
 
 
 async def fetch_schedule_json(q: str, week: int = None) -> Dict:
@@ -82,19 +112,33 @@ class ScheduleBranch(ClsBranch):
         try:
             data = await fetch_schedule_json(q)
             schedule = ScheduleResponseBuilder(data)
-            schedule.build_text(weekday)
-            msg = schedule.get_text()
         except aiohttp.ClientResponseError:
-            await ans('Произошла ошибка, возможно API расписания временно не работает. Если это продолжается длительное время, обратитесь к администрации сайта.')
+            await ans('Произошла ошибка, возможно API расписания временно не работает. '
+                      'Если это продолжается длительное время, обратитесь к администрации сайта.')
         except ScheduleNoEntriesFoundException:
             await ans('Извините, по вашему запросу ничего не найдено.', keyboard=keyboard_gen(EMPTY_KEYBOARD))
         except ScheduleUnknownErrorException:
             await ans(
-                message='Произошла неизвестная ошибка при обработке расписания. Обратитесь к администрации сайта за дополнительной информацией.',
+                message='Произошла неизвестная ошибка при обработке расписания. '
+                        'Обратитесь к администрации сайта за дополнительной информацией.',
                 keyboard=keyboard_gen(EMPTY_KEYBOARD)
                 )
+        except ScheduleMultipleChoicesException:
+            msg, keyboard = parse_choices(data)
+
+            await ans(
+                message=msg,
+                keyboard=keyboard_gen(keyboard)
+            )
         else:
+            schedule.build_text(weekday)
+            msg = schedule.get_text()
+
             u = await UserState.get(uid=ans.from_id)
+
+            if isinstance(u.context, str):
+                u.context = ujson.loads(u.context)
+
             u.context['weekday'] = weekday
             u.context['week'] = schedule.week
             u.context['query'] = q
@@ -120,12 +164,16 @@ class ScheduleBranch(ClsBranch):
         payload = ujson.loads(ans.payload)
 
         u = await UserState.get(uid=ans.from_id)
+
+        if isinstance(u.context, str):
+            u.context = ujson.loads(u.context)
+
         u_weekday = u.context['weekday']
 
         if payload['day'] == 'next':
-            u_weekday = (u_weekday + 1) % 6
+            u_weekday = (u_weekday + 1) % 7
         else:
-            u_weekday = (u_weekday - 1) % 6
+            u_weekday = (u_weekday - 1) % 7
 
         caches.set_config(CACHE_CONFIG)
         cache = caches.get('redis')
@@ -152,12 +200,15 @@ class ScheduleBranch(ClsBranch):
         u.context['weekday'] = u_weekday
         await u.save()
 
-
     @rule_disposal(PayloadHasKey('week'))
     async def change_week(self, ans: Message):
         payload = ujson.loads(ans.payload)
 
         u = await UserState.get(uid=ans.from_id)
+
+        if isinstance(u.context, str):
+            u.context = ujson.loads(u.context)
+
         _u_week = u.context['week']
         _query = u.context['query']
 
@@ -194,21 +245,74 @@ class ScheduleBranch(ClsBranch):
             u.context['week'] = _u_week
             await u.save()
 
-    @rule_disposal(ExitButtonPressed())
-    async def _exit(self, ans: Message):
+
+    @rule_disposal(PayloadHasKey('weekdays'))
+    async def show_weekdays(self, ans: Message):
+
+        caches.set_config(CACHE_CONFIG)
+        cache = caches.get('redis')
+
+        schedule = await cache.get('schedule_{}'.format(ans.from_id))
+
+        if schedule is None:
+            data = await fetch_schedule_json()
+            schedule = ScheduleResponseBuilder(data)
+            await cache.set(
+                'schedule_{}'.format(ans.from_id),
+                schedule,
+                ttl=900
+            )
+
+        schedule.build_weekday_keyboard()
+        keyboard = schedule.get_keyboard()
+
         await ans(
-            'Возвращаемся в главное меню',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
+            message='Выберите день недели:',
+            keyboard=keyboard_gen(keyboard)
         )
-        await bp.branch.exit(ans.from_id)
+
+    @rule_disposal(PayloadHasKey('day_num'))
+    async def get_day_schedule(self, ans: Message):
+
+        payload = ujson.loads(ans.payload)
+        weekday = int(payload['day_num'])
+
+        u = await UserState.get(uid=ans.from_id)
+
+        if isinstance(u.context, str):
+            u.context = ujson.loads(u.context)
+
+        caches.set_config(CACHE_CONFIG)
+        cache = caches.get('redis')
+
+        schedule = await cache.get('schedule_{}'.format(str(ans.from_id)))
+        if schedule is None:
+            data = await fetch_schedule_json(q=u.context['query'])
+            schedule = ScheduleResponseBuilder(data)
+            await cache.set(
+                'schedule_{}'.format(str(ans.from_id)),
+                schedule,
+                ttl=900
+            )
+
+        schedule.build_text(weekday=weekday)
+        msg = schedule.get_text()
+
+        await ans(
+            message=msg,
+            keyboard=keyboard_gen(SCHEDULE_KEYBOARD, one_time=False)
+        )
+
+        u.context['weekday'] = weekday
+        await u.save()
+
+    @rule_disposal(ExitButtonPressed())
+    async def exit(self, ans: Message):
+        await return_to_main_menu(ans)
 
     @rule_disposal(VBMLRule('выйти', lower=True))
     async def _exit(self, ans: Message):
-        await ans(
-            'Возвращаемся в главное меню',
-            keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=True)
-        )
-        await bp.branch.exit(ans.from_id)
+        await return_to_main_menu(ans)
 
 
 bp.branch.add_branch(ScheduleBranch, 'schedule')

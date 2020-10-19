@@ -1,1 +1,1 @@
-from .schedule import ScheduleResponseFormatException, ScheduleNoEntriesFoundException, ScheduleUnknownErrorException
+from .schedule import ScheduleResponseFormatException, ScheduleNoEntriesFoundException, ScheduleUnknownErrorException, ScheduleMultipleChoicesException
