@@ -6,7 +6,7 @@ from vkbottle.rule import VBMLRule, PayloadRule
 from vkbottle.keyboard import keyboard_gen
 from bot import photo_uploader
 from config import Config
-from proictis_api.mentors import MentorMessageCard, MentorNotFoundException
+from content.mentors import MentorMessageCard, MentorNotFoundException
 from models import DBStoredBranch, UserState
 from keyboards import MAIN_MENU_KEYBOARD, EMPTY_KEYBOARD, EXIT_BUTTON
 from utils import fetch_json, return_to_main_menu

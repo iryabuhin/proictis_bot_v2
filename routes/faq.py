@@ -2,7 +2,7 @@ from vkbottle import keyboard_gen
 from vkbottle.bot import Blueprint, Message
 from vkbottle.rule import PayloadRule, VBMLRule
 from vkbottle.branch import ClsBranch, rule_disposal
-from proictis_api.faq.handler_tools import detect_intent_texts
+from content.faq.handler_tools import detect_intent_texts
 from google.api_core.exceptions import GoogleAPIError
 from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON, EMPTY_KEYBOARD
 from rules import ExitButtonPressed

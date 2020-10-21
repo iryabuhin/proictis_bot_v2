@@ -4,7 +4,7 @@ import ujson
 from vkbottle.bot import Blueprint, Message
 from vkbottle.rule import VBMLRule, AbstractMessageRule, LevenshteinDisRule
 from vkbottle.branch import ClsBranch, rule_disposal
-from proictis_api.news import NewsList
+from content.news import NewsList
 from vkbottle.keyboard import keyboard_gen
 from vkbottle import PhotoUploader
 from models.user_state import DBStoredBranch, UserState
