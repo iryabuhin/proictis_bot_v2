@@ -122,8 +122,27 @@ async def wrapper(ans: Message):
     )
 
 
+@rule_disposal(PayloadRule({'selection': 'help'}))
+async def help_message(ans: Message):
+    return ans(
+        message='''
+        Управление чат-ботом осуществляется с помощью кнопок клавиатуры. В случае если клавиатура по какой-то
+        причине не отображается, отправьте сообщение "выйти", чтобы вернуться в главное меню.
+        
+        Каждая кнопка в главном меню ведет в ветвь с соответствующим названию функционалом, управление в каждой ветви
+        осуществляется также с помощью кнопок. 
+        
+        Ветвь "Наставники" позволяет узнать информацию о наставниках Проектного офиса,
+        ветвь "Расписание" позволяет узнать расписание аудиторий, учебных групп и преподователей,
+        ветвь "Новости" отображает последние новости Проектного офиса,
+        а в ветви "ЧаВо" можно найти ответы на самые часто задаваемые вопросы о проектной деятельности. 
+        ''',
+        keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
+    )
+
 bp.branch.add_branch(MainBranch, 'main')
 bp.branch.add_branch(NewsBranch, 'news')
 bp.branch.add_branch(MentorInfoBranch, 'mentors')
 bp.branch.add_branch(FaqDialogflowBranch, 'faq')
 bp.branch.add_branch(ScheduleBranch, 'schedule')
+
