@@ -6,7 +6,7 @@ from vkbottle.rule import PayloadRule, CommandRule, VBMLRule
 from aiocache import caches
 from keyboards import MAIN_MENU_KEYBOARD, SCHEDULE_KEYBOARD, EMPTY_KEYBOARD
 from typing import List, Tuple, Dict, AnyStr, Union
-from proictis_api.schedule import ScheduleResponseBuilder
+from content.schedule import ScheduleResponseBuilder
 from exceptions import ScheduleNoEntriesFoundException, ScheduleUnknownErrorException,\
     ScheduleResponseFormatException,\
     ScheduleMultipleChoicesException

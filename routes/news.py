@@ -1,10 +1,9 @@
 from typing import List, Union, Dict, Tuple, AnyStr, Callable
-
 import ujson
 from vkbottle.bot import Blueprint, Message
 from vkbottle.rule import VBMLRule, AbstractMessageRule, LevenshteinDisRule
 from vkbottle.branch import ClsBranch, rule_disposal
-from proictis_api.news import NewsList
+from content.news import NewsList
 from vkbottle.keyboard import keyboard_gen
 from vkbottle import PhotoUploader
 from models.user_state import DBStoredBranch, UserState
@@ -18,13 +17,11 @@ bp = Blueprint(name='news')
 bp.branch = DBStoredBranch()
 
 
-
 @bp.on.message(VBMLRule('новости', lower=True))
 async def news_handler(ans: Message):
     await ans(
-        'Нажмите "Далее", чтобы увидеть последние новости с сайта Проектного офиса или'
-        'нажмите "Поиск" для интерактивного поиска по новостям Проектного офиса и группы ИКТИБ ВКонтакте',
-        keyboard=keyboard_gen([[{'text': 'Далее', 'color': 'positive'}], [{'text': 'Поиск'}]])
+        'Нажмите "Далее", чтобы увидеть последние новости Проектного офиса',
+        keyboard=keyboard_gen([[{'text': 'Далее', 'color': 'positive'}]])
     )
     await bp.branch.add(ans.from_id, 'news')
 

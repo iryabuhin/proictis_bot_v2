@@ -10,8 +10,7 @@ __pycache__/
 google_creds/
 
 # some private data
-mentor_info.json
-projects.json
+content/proictis_api/
 
 # IDE stuff
 .idea/
