@@ -22,6 +22,9 @@ import aiohttp
 bp = Blueprint(name='schedule')
 bp.branch = DBStoredBranch()
 
+caches.set_config(CACHE_CONFIG)
+cache = caches.get('redis')
+
 
 def parse_choices(data: Dict) -> Tuple[str, List[List[Dict]]]:
     msg = list()
@@ -107,7 +110,12 @@ class ScheduleBranch(ClsBranch):
     async def branch(self, ans: Message):
         q = ans.text
 
-        weekday = datetime.today().weekday()
+        u = await UserState.get(uid=ans.from_id)
+
+        if isinstance(u.context, str):
+            u.context = ujson.loads(u.context)
+
+        weekday = datetime.today().weekday() + 1
 
         try:
             data = await fetch_schedule_json(q)
@@ -120,7 +128,7 @@ class ScheduleBranch(ClsBranch):
         except ScheduleUnknownErrorException:
             await ans(
                 message='Произошла неизвестная ошибка при обработке расписания. '
-                        'Обратитесь к администрации сайта за дополнительной информацией.',
+                        'Обратитесь к администрации за дополнительной информацией.',
                 keyboard=keyboard_gen(EMPTY_KEYBOARD)
                 )
         except ScheduleMultipleChoicesException:
@@ -134,17 +142,10 @@ class ScheduleBranch(ClsBranch):
             schedule.build_text(weekday)
             msg = schedule.get_text()
 
-            u = await UserState.get(uid=ans.from_id)
-
-            if isinstance(u.context, str):
-                u.context = ujson.loads(u.context)
-
             u.context['weekday'] = weekday
             u.context['week'] = schedule.week
             u.context['query'] = q
 
-            caches.set_config(CACHE_CONFIG)
-            cache = caches.get('redis')
             await cache.set(
                 'schedule_{}'.format(str(ans.from_id)),
                 schedule,
@@ -174,9 +175,6 @@ class ScheduleBranch(ClsBranch):
             u_weekday = (u_weekday + 1) % 7
         else:
             u_weekday = (u_weekday - 1) % 7
-
-        caches.set_config(CACHE_CONFIG)
-        cache = caches.get('redis')
 
         schedule = await cache.get('schedule_{}'.format(str(ans.from_id)))
         if schedule is None:
@@ -230,9 +228,6 @@ class ScheduleBranch(ClsBranch):
                 keyboard=keyboard_gen(EMPTY_KEYBOARD)
             )
         else:
-            caches.set_config(CACHE_CONFIG)
-            cache = caches.get('redis')
-
             msg = schedule.get_text()
             await ans(message=msg, keyboard=keyboard_gen(SCHEDULE_KEYBOARD, one_time=False))
 
@@ -245,12 +240,10 @@ class ScheduleBranch(ClsBranch):
             u.context['week'] = _u_week
             await u.save()
 
-
     @rule_disposal(PayloadHasKey('weekdays'))
     async def show_weekdays(self, ans: Message):
 
         caches.set_config(CACHE_CONFIG)
-        cache = caches.get('redis')
 
         schedule = await cache.get('schedule_{}'.format(ans.from_id))
 
@@ -283,7 +276,6 @@ class ScheduleBranch(ClsBranch):
             u.context = ujson.loads(u.context)
 
         caches.set_config(CACHE_CONFIG)
-        cache = caches.get('redis')
 
         schedule = await cache.get('schedule_{}'.format(str(ans.from_id)))
         if schedule is None:

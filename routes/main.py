@@ -3,28 +3,22 @@ from vkbottle.branch import ClsBranch, rule_disposal, Branch, ExitBranch
 from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
 from vkbottle.rule import PayloadRule, VBMLRule, EventRule, Pattern, CommandRule, Any
 from vkbottle.ext import Middleware
-from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON
+from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON, RESET_DIALOG_KEYBOARD, NEWS_WELCOME_KEYBOARD
 from models.user_state import DBStoredBranch, UserState
 from routes.faq import FaqDialogflowBranch
 from routes.mentors import MentorInfoBranch
 from routes.news import NewsBranch
 from routes.schedule import ScheduleBranch
-import ujson
 
 bp = Blueprint(name='main')
 bp.branch = DBStoredBranch()
 
 
-
-
 @bp.on.message(PayloadRule({'command': 'start'}))
 async def wrapper(ans: Message):
-    await ans('Здравствуйте! Я - чат-бот Проектного офиса ИКТИБ '
-              'и я здесь чтобы предоставить вам информацию о наставниках, '
-              'доступных проектах и многом другом.\n'
-              'Помимо этого, я могу напоминать вам о предстоящих дедлайнах,'
-              'связанных с проектной деятельностью, а также уведомлять вас о новостях'
-              'из жизни Проектного офиса. \n'
+    await ans('Здравствуйте! В этом чат-боте вы сможете найти '
+              'информацию о наставниках, проектах, различных мероприятих '
+              'и многом другом.\n'
               'Если у вас возникнут какие-либо вопросы, нажмите кнопку "Помощь"',
               keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
               )
@@ -33,26 +27,11 @@ async def wrapper(ans: Message):
 
 @bp.on.message(CommandRule('reset_user'))
 async def reset_branch(ans: Message):
-    kbrd = [
-        [
-            {
-                'text': 'Сбросить состояние диалога',
-                'payload': "{\"command\": \"start\"}",
-                'color': 'primary'
-            }
-        ],
-        [
-            {
-                'text': 'Отмена',
-                'payload': "{\"command\": \"cancel_reset\"}"
-            }
-        ]
-    ]
     await ans(
         'Это сбросит состояние вашего диалога с ботом.'
         'Нажмите кнопку "Сбросить состояние диалога" чтобы подтвердить действие '
         'и "Отмена" для отмены действия.',
-        keyboard=keyboard_gen(kbrd, one_time=True),
+        keyboard=keyboard_gen(RESET_DIALOG_KEYBOARD, one_time=True),
         payload="{}"
     )
 
@@ -67,7 +46,7 @@ class MainBranch(ClsBranch):
 
     @rule_disposal(PayloadRule({'selection': 'faq'}))
     async def faq_wrapper(self, ans: Message):
-        await ans('Задавайте свои вопросы как будто спрашиваете человека'
+        await ans('Задавайте свои вопросы словно спрашиваете человека'
                   'и я попытаюсь найти на них ответ!',
                   keyboard=keyboard_gen([[EXIT_BUTTON]])
                   )
@@ -99,9 +78,9 @@ class MainBranch(ClsBranch):
     async def news_enter(self, ans: Message):
         await bp.branch.add(ans.from_id, 'news')
         await ans(
-            'Нажмите "Далее", чтобы увидеть последние новости с сайта Проектного офиса или'
-            'нажмите "Поиск" для интерактивного поиска по новостям Проектного офиса и группы ИКТИБ ВКонтакте',
-            keyboard=keyboard_gen([[{'text': 'Далее', 'color': 'positive'}], [{'text': 'Поиск'}]])
+            'Нажмите "Далее", чтобы увидеть последние новости с сайта Проектного офиса или '
+            '"Поиск" для интерактивного поиска по новостям Проектного офиса и группы ИКТИБ ВКонтакте',
+            keyboard=keyboard_gen(NEWS_WELCOME_KEYBOARD, one_time=True)
         )
 
     @rule_disposal(PayloadRule({'selection': 'projects'}))
@@ -132,7 +111,6 @@ async def wrapper(ans: Message):
         uid=ans.from_id,
         branch='main'
     )
-
 
 
 bp.branch.add_branch(MainBranch, 'main')

@@ -1,5 +1,6 @@
 import json
 
+from keyboards import EXIT_BUTTON, PAGE_NAVIGATION_BUTTONS
 from utils import fetch_json
 from asyncinit import asyncinit
 from config import Config
@@ -39,7 +40,7 @@ class NewsList:
 
         return text, image_link
 
-    def make_text_and_keyboard(self, page_num=0):
+    def make_text_and_keyboard(self, page_num=1):
         self.make_text(page_num=page_num)
         self.make_keyboard(page_num=page_num)
 
@@ -47,7 +48,7 @@ class NewsList:
         self.reset_keyboard()
 
         if page_num*Config.NEWS_PER_MSG > len(self.news_json):
-            self.keyboard = [[{'text': 'Назад', 'color': 'primary'}, {'text': 'Выйти', 'color': 'primary'}]]
+            self.keyboard = [[{'text': 'Назад', 'color': 'primary'}, EXIT_BUTTON]]
             return
 
         for i in range((page_num-1) * Config.NEWS_PER_MSG, Config.NEWS_PER_MSG * page_num):
@@ -64,21 +65,20 @@ class NewsList:
                     'payload': payload
                 }
             ])
+
         self.keyboard.append(
-            [
-                {'text' : 'Предыдущая страница', 'color': 'positive'},
-                {'text': 'Выйти', 'color': 'negative'}
-            ]
+            PAGE_NAVIGATION_BUTTONS
+        )
+        self.keyboard.append(
+            [EXIT_BUTTON]
         )
 
 
     def make_text(self, page_num=0):
         self.reset_text()
         message = []
-        if page_num == 0:
-            message.append('Последние новости с сайта Проектного офиса:')
 
-        if page_num*Config.NEWS_PER_MSG > len(self.news_json):
+        if page_num * Config.NEWS_PER_MSG > len(self.news_json):
             self.text = 'Новости закончились! Нажмите "Назад", чтобы вернуться ' \
                         'к предыдущим новостям или "Выйти", чтобы выйти'
             return

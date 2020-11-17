@@ -1,15 +1,14 @@
 from typing import List, Union, Dict, Tuple, AnyStr, Callable
 import ujson
 from vkbottle.bot import Blueprint, Message
-from vkbottle.rule import VBMLRule, AbstractMessageRule, LevenshteinDisRule
+from vkbottle.rule import VBMLRule, AbstractMessageRule, LevenshteinDisRule, PayloadRule
 from vkbottle.branch import ClsBranch, rule_disposal
 from content.news import NewsList
 from vkbottle.keyboard import keyboard_gen
 from vkbottle import PhotoUploader
 from models.user_state import DBStoredBranch, UserState
 from keyboards import MAIN_MENU_KEYBOARD, EMPTY_KEYBOARD
-from rules import PayloadHasKey
-import json
+from rules import PayloadHasKey, ExitButtonPressed
 
 from utils import return_to_main_menu
 
@@ -27,26 +26,36 @@ async def news_handler(ans: Message):
 
 
 class NewsBranch(ClsBranch):
-    @rule_disposal(VBMLRule('выйти', lower=True))
+    @rule_disposal(ExitButtonPressed())
     async def exit_branch(self, ans: Message):
         await return_to_main_menu(ans)
 
-    @rule_disposal(LevenshteinDisRule('предыдущая страница', lev_d=85))
-    async def inc_page(self, ans: Message):
+    @rule_disposal(VBMLRule('выйти', lower=True))
+    async def exit_branch_(self, ans: Message):
+        await return_to_main_menu(ans)
+
+    @rule_disposal(PayloadHasKey('page'))
+    async def change_news_page(self, ans: Message):
         u = await UserState.get(uid=ans.from_id)
 
         if isinstance(u.context, str):
             u.context = ujson.loads(u.context)
 
-        if 'page_num' in u.context:
-            u.context['page_num'] += 1
-        else:
+        if 'page_num' not in u.context:
             u.context['page_num'] = 1
 
-        await u.save()
+        payload = ujson.loads(ans.payload)
+        page_num = u.context['page_num']
+
+        if payload.get('page') == 'next':
+            page_num += 1
+        elif page_num <= 1:
+            page_num = 1
+        else:
+            page_num -= 1
 
         news = await NewsList()
-        news.make_text_and_keyboard(page_num=u.context['page_num'])
+        news.make_text_and_keyboard(page_num=page_num)
 
         msg = news.get_text()
         kbrd = news.get_keyboard()
@@ -54,8 +63,19 @@ class NewsBranch(ClsBranch):
         await ans('Загружаем новости....', keyboard=keyboard_gen(EMPTY_KEYBOARD))
         await ans(message=msg, keyboard=keyboard_gen(kbrd))
 
+        u.context['page_num'] = page_num
+        await u.save()
 
-    @rule_disposal(VBMLRule('далее', lower=True))
+    # TODO убрать заглушку и написать полноценный поиск
+    @rule_disposal(PayloadRule({'selection': 'search'}))
+    async def search_ictis_news(self, ans: Message):
+        await ans(
+            message='Извините, эта функция временно не доступна.\n'
+                    'Вы можете увидеть последние новости в группе ИКТИБ ИТА ЮФУ ВКонтакте (https://vk.com/ictis_sfedu)'
+        )
+        await return_to_main_menu(ans)
+
+    @rule_disposal(PayloadRule({'selection': 'next'}))
     async def send_news(self, ans: Message):
         news_list = await NewsList()
         news_list.make_text_and_keyboard()
@@ -64,7 +84,11 @@ class NewsBranch(ClsBranch):
         kbrd = news_list.get_keyboard()
 
         u = await UserState.get(uid=ans.from_id)
-        u.context['page_num'] = 0
+
+        if isinstance(u.context, str):
+            u.context = ujson.loads(u.context)
+
+        u.context['page_num'] = 1
         await u.save()
 
         await ans(

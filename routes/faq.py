@@ -16,8 +16,7 @@ bp.branch = DBStoredBranch()
 
 @bp.on.message(PayloadRule({'selection': 'faq'}))
 async def faq_wrapper(ans: Message):
-    await ans('Задавайте свои вопросы как будто спрашиваете человека'
-              'и я попытаюсь найти на них ответ!',
+    await ans('Задавайте вопросы и мы попытаемся найти на них ответ!',
               keyboard=keyboard_gen([[EXIT_BUTTON]])
               )
     await bp.branch.add(ans.from_id, 'faq')
