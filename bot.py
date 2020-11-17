@@ -26,18 +26,19 @@ bot = Bot(tokens=[token], debug=Config.DEBUG)
 bot.branch = DBStoredBranch()
 photo_uploader = PhotoUploader(bot.api, generate_attachment_strings=True)
 
-@bot.middleware.middleware_handler()
-class UserStateMiddleware(Middleware):
-    async def pre(self, msg: Message, *args):
-        u = await UserState.filter(uid=msg.from_id).get_or_none()
 
-        if u is None:
-            u = await UserState.create(
-                uid=msg.from_id,
-                branch='main',
-                context={}
-            )
-            await u.save()
+# @bot.middleware.middleware_handler()
+# class UserStateMiddleware(Middleware):
+#     async def pre(self, msg: Message, *args):
+#         u = await UserState.filter(uid=msg.from_id).get_or_none()
+#
+#         if u is None:
+#             u = await UserState.create(
+#                 uid=msg.from_id,
+#                 branch='main',
+#                 context={}
+#             )
+#             await u.save()
 
 
 if __name__ == '__main__':
