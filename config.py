@@ -1,7 +1,7 @@
 from utils import envget
 from dotenv import load_dotenv
 from urllib.parse import urlparse
-import os
+import os.path
 
 load_dotenv()
 
@@ -9,7 +9,8 @@ load_dotenv()
 class Config:
     DEBUG = envget('DEBUG') or True
 
-    BASEDIR = os.path.abspath(__file__)
+    BASEDIR = os.path.dirname(os.path.abspath(__file__))
+    API_BACKUP_LOCATION = os.path.join(BASEDIR, os.path.join('content', 'proictis_api'))
     TOKEN = envget('TOKEN') or  None
     DATABASE_URL = envget('DATABASE_URL') or "sqlite://users.db"
     BASE_API_URL = 'https://proictis.sfedu.ru'
@@ -27,8 +28,7 @@ class Config:
         'achievements': '/api/achievements',
         'login': '/api/login',
         'archive': '/api/chat/archive',
-        'requests': '/api/me/requests',
-        'update': '/api/update'
+        'requests': '/api/me/requests'
     }
 
     NEWS_PER_MSG = 4
@@ -45,3 +45,6 @@ class Config:
     
     GOOGLE_APPLICATION_CREDENTIALS = envget('GOOGLE_APPLICATION_CREDENTIALS')
     PROJECT_ID = envget('PROJECT_ID')
+
+    PROICTIS_LOGIN = envget('PROICTIS_LOGIN')
+    PROICTIS_PASSWORD = envget('PROICTIS_LOGIN')

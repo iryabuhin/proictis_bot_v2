@@ -2,7 +2,6 @@ from vkbottle.bot import Blueprint, Message
 from vkbottle.branch import ClsBranch, rule_disposal, Branch, ExitBranch
 from vkbottle.keyboard import Keyboard, Text, OpenLink, keyboard_gen
 from vkbottle.rule import PayloadRule, VBMLRule, EventRule, Pattern, CommandRule, Any
-from vkbottle.ext import Middleware
 from keyboards import MAIN_MENU_KEYBOARD, EXIT_BUTTON, RESET_DIALOG_KEYBOARD, NEWS_WELCOME_KEYBOARD
 from models.user_state import DBStoredBranch, UserState
 from routes.faq import FaqDialogflowBranch
@@ -35,6 +34,9 @@ async def reset_branch(ans: Message):
         payload="{}"
     )
 
+@bp.on.message(CommandRule('empty_keyboard'))
+async def empty_keyboard(ans: Message):
+    await ans('test', keyboard=keyboard_gen([]))
 
 class MainBranch(ClsBranch):
 
@@ -43,6 +45,17 @@ class MainBranch(ClsBranch):
             message='Главное меню',
             keyboard=keyboard_gen(MAIN_MENU_KEYBOARD, one_time=False)
         )
+
+    # DRY? never heard of that
+    @rule_disposal(PayloadRule({'command': 'start'}))
+    async def start_command_wrapper(ans: Message):
+        await ans('Здравствуйте! В этом чат-боте вы сможете найти '
+                  'информацию о наставниках, проектах, различных мероприятих '
+                  'и многом другом.\n'
+                  'Если у вас возникнут какие-либо вопросы, нажмите кнопку "Помощь"',
+                  keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
+                  )
+        await bp.branch.add(uid=ans.from_id, branch='main')
 
     @rule_disposal(PayloadRule({'selection': 'faq'}))
     async def faq_wrapper(self, ans: Message):
