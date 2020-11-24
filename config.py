@@ -1,4 +1,3 @@
-from utils import envget
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 import os.path
@@ -7,14 +6,14 @@ load_dotenv()
 
 
 class Config:
-    DEBUG = envget('DEBUG') or True
+    DEBUG = os.environ.get('DEBUG') or True
 
     BASEDIR = os.path.dirname(os.path.abspath(__file__))
     API_BACKUP_LOCATION = os.path.join(BASEDIR, os.path.join('content', 'proictis_api'))
-    TOKEN = envget('TOKEN') or  None
-    DATABASE_URL = envget('DATABASE_URL') or "sqlite://users.db"
+    TOKEN = os.environ.get('TOKEN') or  None
+    DATABASE_URL = os.environ.get('DATABASE_URL') or "sqlite://users.db"
     BASE_API_URL = 'https://proictis.sfedu.ru'
-    PORT = int(envget('PORT') or 5555)
+    PORT = int(os.environ.get('PORT') or 5555)
 
     URL_PATH = {
         'mentors': '/api/mentors',
@@ -36,15 +35,17 @@ class Config:
 
     SCHEDULE_URL = 'http://165.22.28.187/schedule-api/'
 
-    REDIS_URL = envget('REDIS_URL') or '127.0.0.1:6379'
+    REDIS_URL = os.environ.get('REDIS_URL') or '127.0.0.1:6379'
 
     REDIS_ENDPOINT = urlparse(REDIS_URL).hostname
     REDIS_PORT = urlparse(REDIS_URL).port
     REDIS_USERNAME = urlparse(REDIS_URL).username
     REDIS_PASSWORD = urlparse(REDIS_URL).password
     
-    GOOGLE_APPLICATION_CREDENTIALS = envget('GOOGLE_APPLICATION_CREDENTIALS')
-    PROJECT_ID = envget('PROJECT_ID')
+    GOOGLE_APPLICATION_CREDENTIALS = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    PROJECT_ID = os.environ.get('PROJECT_ID')
 
-    PROICTIS_LOGIN = envget('PROICTIS_LOGIN')
-    PROICTIS_PASSWORD = envget('PROICTIS_LOGIN')
+    PROICTIS_LOGIN = os.environ.get('PROICTIS_LOGIN')
+    PROICTIS_PASSWORD = os.environ.get('PROICTIS_LOGIN')
+
+    USE_MIDDLEWARE = os.environ.get('USE_MIDDLEWARE') or False

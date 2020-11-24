@@ -1,22 +1,18 @@
-from typing import Dict, Union, List, AnyStr, Optional
-
+from typing import Dict
+from tortoise import Tortoise
 from vkbottle import keyboard_gen
 from vkbottle.framework.framework.rule import Message
-from vkbottle.rule import AbstractMessageRule, PayloadRule
 import os
 import ujson
 import aiohttp
 
+from config import Config
 from keyboards import MAIN_MENU_KEYBOARD
 from models import UserState
 
 
 def surname_fuzz_processor(surname: str) -> str:
     return surname.strip().lower().replace('ё', 'е')
-
-
-def envget(key: str) -> str:
-    return os.environ.get(key)
 
 
 async def fetch_url(url: str, **kwargs) -> str:
@@ -53,3 +49,13 @@ async def return_to_main_menu(message: Message, context: Dict[str, str] = None) 
         message='Главное меню',
         keyboard=keyboard_gen(MAIN_MENU_KEYBOARD)
     )
+
+
+async def init_db():
+    await Tortoise.init(
+        db_url=Config.DATABASE_URL or 'sqlite://users.db',
+        modules={
+            'models': ['models.user_state']
+        }
+    )
+    await Tortoise.generate_schemas()
