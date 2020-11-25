@@ -19,6 +19,9 @@ photo_uploader = PhotoUploader(bot.api, generate_attachment_strings=True)
 @bot.middleware.middleware_handler()
 class CheckUserStateMiddleware(Middleware):
     async def pre(self, msg: Message, *args):
+        if not Config.USE_MIDDLEWARE:
+            return
+
         u = await UserState.filter(uid=msg.from_id).get_or_none()
 
         if u is None:

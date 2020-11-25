@@ -24,21 +24,13 @@ async def wrapper(ans: Message):
     await bp.branch.add(uid=ans.from_id, branch='main')
 
 
-@bp.on.message(CommandRule('reset_user'))
-async def reset_branch(ans: Message):
-    await ans(
-        'Это сбросит состояние вашего диалога с ботом.'
-        'Нажмите кнопку "Сбросить состояние диалога" чтобы подтвердить действие '
-        'и "Отмена" для отмены действия.',
-        keyboard=keyboard_gen(RESET_DIALOG_KEYBOARD, one_time=True),
-        payload="{}"
-    )
 
-@bp.on.message(CommandRule('empty_keyboard'))
-async def empty_keyboard(ans: Message):
-    await ans('test', keyboard=keyboard_gen([]))
 
 class MainBranch(ClsBranch):
+
+    @rule_disposal(CommandRule('empty_keyboard'))
+    async def empty_keyboard(ans: Message):
+        await ans('test', keyboard=keyboard_gen([]))
 
     async def branch(self, ans: Message, *args):
         await ans(
