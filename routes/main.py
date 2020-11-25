@@ -29,7 +29,7 @@ async def wrapper(ans: Message):
 class MainBranch(ClsBranch):
 
     @rule_disposal(CommandRule('empty_keyboard'))
-    async def empty_keyboard(ans: Message):
+    async def empty_keyboard(self, ans: Message):
         await ans('test', keyboard=keyboard_gen([]))
 
     async def branch(self, ans: Message, *args):
@@ -40,7 +40,7 @@ class MainBranch(ClsBranch):
 
     # DRY? never heard of that
     @rule_disposal(PayloadRule({'command': 'start'}))
-    async def start_command_wrapper(ans: Message):
+    async def start_command_wrapper(self, ans: Message):
         await ans('Здравствуйте! В этом чат-боте вы сможете найти '
                   'информацию о наставниках, проектах, различных мероприятих '
                   'и многом другом.\n'
